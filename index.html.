@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteio de Equipes</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; background: #f8f8f8; }
+  h1 { margin-top: 20px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 60px);
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .square {
+    width: 60px; height: 60px;
+    background: #ccc; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+  }
+  .revealed {
+    background: #333; color: white; cursor: not-allowed;
+  }
+  .yellow { background: gold; color: black; }
+</style>
+</head>
+<body>
+
+<h1>Sorteio de Equipes</h1>
+<p>Clique para revelar seu time</p>
+<div class="grid" id="grid"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+<script>
+  // Configuração do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyA...sua-api-key",
+    authDomain: "seu-projeto.firebaseapp.com",
+    databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
+    projectId: "seu-projeto",
+    storageBucket: "seu-projeto.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef123456"
+  };
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const grid = document.getElementById("grid");
+
+  // Cria os 25 quadrados
+  for (let i = 1; i <= 25; i++) {
+    let div = document.createElement("div");
+    div.classList.add("square");
+    div.id = "square" + i;
+    div.innerText = "?";
+    div.addEventListener("click", () => revealSquare(i));
+    grid.appendChild(div);
+  }
+
+  // Atualiza quadrados do Firebase em tempo real
+  firebase.database().ref("squares").on("value", snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      for (let i = 1; i <= 25; i++) {
+        const square = document.getElementById("square" + i);
+        if (data[i]) {
+          square.classList.add("revealed");
+          square.innerText = data[i] === "preta" ? "Preta" : "Amarela";
+          if (data[i] === "amarela") square.classList.add("yellow");
+        }
+      }
+    }
+  });
+
+  function revealSquare(id) {
+    const squareRef = firebase.database().ref("squares/" + id);
+    squareRef.get().then(snapshot => {
+      if (!snapshot.exists()) {
+        const team = Math.random() > 0.5 ? "preta" : "amarela";
+        squareRef.set(team);
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
